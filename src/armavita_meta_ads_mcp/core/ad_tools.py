@@ -297,19 +297,19 @@ def _build_image_from_bytes(raw: bytes) -> Image:
     return Image(data=buffer.getvalue(), format="jpeg")
 
 
-def _ad_image_error(ad_id: str, stage: str, primary_text: str, meta_response: Optional[Dict[str, Any]] = None) -> None:
+def _ad_image_error(ad_id: str | int, stage: str, primary_text: str, meta_response: Optional[Dict[str, Any]] = None) -> None:
     payload: Dict[str, Any] = {
         "error": "read_ad_image_failed",
         "message": primary_text,
         "stage": stage,
-        "ad_id": ad_id,
+        "ad_id": str(ad_id),
     }
     if meta_response is not None:
         payload["meta_response"] = meta_response
     raise McpToolError(json.dumps(payload, indent=2))
 
 
-async def _get_creative_id_for_ad(ad_id: str, meta_access_token: str) -> Tuple[str, str]:
+async def _get_creative_id_for_ad(ad_id: str | int, meta_access_token: str) -> Tuple[str, str]:
     ad_payload = await make_api_request(ad_id, meta_access_token, {"fields": "creative{id},account_id"})
     if isinstance(ad_payload, dict) and ad_payload.get("error"):
         _ad_image_error(ad_id, "fetch_ad", "Could not get ad data", ad_payload)
@@ -349,7 +349,7 @@ async def _extract_creative_image_hashes(ad_creative_id: str, meta_access_token:
     return deduped
 
 
-async def _load_fallback_creatives(ad_id: str, meta_access_token: str) -> Optional[Dict[str, Any]]:
+async def _load_fallback_creatives(ad_id: str | int, meta_access_token: str) -> Optional[Dict[str, Any]]:
     creatives_raw = await list_ad_creatives(ad_id=ad_id, meta_access_token=meta_access_token)
     creatives_payload = _decode_json_if_string(creatives_raw)
 
@@ -455,7 +455,7 @@ async def list_ads(
 
 @mcp_server.tool()
 @meta_api_tool
-async def read_ad(ad_id: str, meta_access_token: Optional[str] = None) -> str:
+async def read_ad(ad_id: str | int, meta_access_token: Optional[str] = None) -> str:
     if not ad_id:
         return _json({"error": "No ad ID provided"})
 
@@ -470,7 +470,7 @@ async def read_ad(ad_id: str, meta_access_token: Optional[str] = None) -> str:
 @mcp_server.tool()
 @meta_api_tool
 async def list_ad_previews(
-    ad_id: str,
+    ad_id: str | int,
     meta_access_token: Optional[str] = None,
     ad_format: Optional[str] = None,
     locale: Optional[str] = None,
@@ -518,10 +518,11 @@ async def list_ad_previews(
 
 @mcp_server.tool()
 @meta_api_tool
-async def read_ad_creative(ad_creative_id: str, meta_access_token: Optional[str] = None) -> str:
+async def read_ad_creative(ad_creative_id: str | int, meta_access_token: Optional[str] = None) -> str:
     if not ad_creative_id:
         return _json({"error": "No creative ID provided"})
 
+    ad_creative_id = str(ad_creative_id)
     payload = await make_api_request(ad_creative_id, meta_access_token, {"fields": _CREATIVE_FIELDS.replace(",image_urls_for_viewing", "")})
 
     if isinstance(payload, dict) and payload.get("id"):
@@ -541,7 +542,7 @@ async def create_ad(
     ad_account_id: str,
     name: str,
     ad_set_id: str | int,
-    ad_creative_id: str,
+    ad_creative_id: str | int,
     status: str = "PAUSED",
     bid_amount: Optional[int] = None,
     tracking_specs: Optional[List[Dict[str, Any]]] = None,
@@ -576,7 +577,7 @@ async def create_ad(
 @mcp_server.tool()
 @meta_api_tool
 async def list_ad_creatives(
-    ad_id: str,
+    ad_id: str | int,
     meta_access_token: Optional[str] = None,
     page_cursor: str = "",
 ) -> str:
@@ -603,7 +604,7 @@ async def list_ad_creatives(
 
 @mcp_server.tool()
 @meta_api_tool
-async def read_ad_image(ad_id: str, meta_access_token: Optional[str] = None) -> Image:
+async def read_ad_image(ad_id: str | int, meta_access_token: Optional[str] = None) -> Image:
     if not ad_id:
         _ad_image_error(str(ad_id), "validation", "No ad ID provided")
 
@@ -643,7 +644,7 @@ async def read_ad_image(ad_id: str, meta_access_token: Optional[str] = None) -> 
 @mcp_server.tool()
 @meta_api_tool
 async def export_ad_image_file(
-    ad_id: str,
+    ad_id: str | int,
     meta_access_token: Optional[str] = None,
     output_dir: str = "ad_images",
 ) -> str:
@@ -665,7 +666,7 @@ async def export_ad_image_file(
 @mcp_server.tool()
 @meta_api_tool
 async def update_ad(
-    ad_id: str,
+    ad_id: str | int,
     status: Optional[str] = None,
     bid_amount: Optional[int] = None,
     tracking_specs: Optional[List[Dict[str, Any]]] = None,
