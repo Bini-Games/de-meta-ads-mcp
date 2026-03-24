@@ -775,6 +775,13 @@ async def upload_ad_image_asset(
                     "image/gif": ".gif",
                 }.get(mime_type, ".png")
                 inferred_name = f"upload{extension}"
+        elif os.path.isfile(image_file_path):
+            # Actually read the file from disk
+            with open(image_file_path, 'rb') as f:
+                image_bytes = f.read()
+            encoded_image = base64.b64encode(image_bytes).decode('utf-8')
+            if not inferred_name:
+                inferred_name = os.path.basename(image_file_path)
         else:
             encoded_image = image_file_path.strip()
             if not inferred_name:
