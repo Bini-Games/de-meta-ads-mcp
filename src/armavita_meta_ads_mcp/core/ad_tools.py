@@ -976,7 +976,7 @@ def _build_asset_feed_spec_payload(
 async def _resolve_page_id_for_creative(
     ad_account_id: str,
     meta_access_token: str,
-    facebook_page_id: Optional[str],
+    facebook_page_id: Optional[str | int],
 ) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
     if facebook_page_id:
         return str(facebook_page_id), None
@@ -1003,7 +1003,7 @@ async def create_ad_creative(
     ad_image_hash: Optional[str] = None,
     meta_access_token: Optional[str] = None,
     name: Optional[str] = None,
-    facebook_page_id: Optional[str] = None,
+    facebook_page_id: Optional[str | int] = None,
     link_url: Optional[str] = None,
     primary_text: Optional[str] = None,
     primary_text_variants: Optional[List[str]] = None,
